@@ -1,4 +1,4 @@
-# gyroMouse 🖱️
+# gyroMouse
 
 gyroMouse is a comprehensive project that transforms a 3-sensor IMU device into an "air mouse" using an Unscented Kalman Filter (UKF-lite). It uses live accelerometer and gyroscope data to accurately estimate angular velocity ($\omega$) and seamlessly translates those movements into PC cursor coordinates.
 
