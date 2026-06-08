@@ -1,0 +1,18 @@
+# MATLAB gitignore
+
+*.mat
+*.slx.autosave
+*.mdl.autosave
+*.asv
+
+# mex files
+*.mexw64
+*.mexa64
+*.mexmaci64
+*.mexmaca64
+
+# app designer files
+*.mlappinstall
+
+# figure files
+*.fig
