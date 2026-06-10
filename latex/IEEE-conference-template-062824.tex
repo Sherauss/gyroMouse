@@ -39,14 +39,14 @@ The primary objective of this project is to build a highly responsive 6-DOF gyro
 
 To improve observability without relying on expensive hardware, the controller was designed with three spatially distributed IMUs. The center, left, and right sensors measure the same rigid-body motion from different points on the device. This geometry creates redundant measurements and also exposes rotational effects through the lever-arm relationship between angular velocity, angular acceleration, and linear acceleration.
 
-The resulting estimation problem is nonlinear because the device orientation evolves on the 3-D rotation manifold and because the acceleration measured at each IMU depends on cross-products of angular velocity and angular acceleration. An Extended Kalman Filter (EKF) could be used for this task, but it requires explicit Jacobian derivations. Instead, we used an Unscented Kalman Filter (UKF), which propagates deterministic sigma points through the nonlinear process and measurement models.
+The resulting estimation problem is nonlinear because the device orientation evolves on the 3-D rotation manifold and because the acceleration measured at each IMU depends on cross-products of angular velocity and angular acceleration. An Extended Kalman Filter (EKF) could be used for this task, but it requires explicit Jacobian derivations. Instead, we used an Unscented Kalman Filter (UKF), which represents the state distribution with deterministic sigma points and propagates them through the nonlinear process and measurement models \cite{kalman1960,julier2004,wan2000}.
 
 The project was implemented in two stages. The first stage used a full-state offline UKF to validate the multi-IMU rigid-body model on recorded data. The second stage used a reduced-state online UKF-lite filter driven by the live serial stream from the ESP32. This separation allowed us to compare model completeness against real-time responsiveness, which is the main trade-off in a human-computer interaction system.
 
 \section{Mathematical Framework}
 
 \subsection{Full-State Offline UKF}
-For the offline analysis, spatial orientation is represented using a unit quaternion $\mathbf{q}$ to avoid gimbal lock. The full-state UKF tracks the kinematics at the controller's center of mass (COM):
+For the offline analysis, spatial orientation is represented using a unit quaternion $\mathbf{q}$ to avoid gimbal lock \cite{kuipers1999,crassidis2003}. The full-state UKF tracks the kinematics at the controller's center of mass (COM):
 \begin{equation}
 \mathbf{x}_k =
 \begin{bmatrix}
@@ -100,7 +100,7 @@ For the live serial implementation, the filter state was reduced to a compact st
 The exact online state is intentionally smaller than the offline rigid-body state, so the number of sigma points decreases from 27 to $2n_{lite}+1$. The UKF-lite model avoids quaternion propagation inside the real-time control loop and prioritizes low latency and responsiveness, while the offline filter preserves a more complete rigid-body interpretation.
 
 \section{Hardware and Data Acquisition}
-The hardware platform consists of an ESP32 microcontroller and three MPU6500 IMUs placed at the center, left, and right positions of the controller body.
+The hardware platform consists of an ESP32 microcontroller and three MPU6500 IMUs placed at the center, left, and right positions of the controller body \cite{invensense2014}.
 
 \subsection{Dual-I2C Architecture}
 The MPU6500 supports two native I2C addresses, 0x68 and 0x69. To read three sensors without an external multiplexer, the ESP32's two hardware I2C buses were used. The center sensor at 0x68 and the left sensor at 0x69 share I2C0, while the right sensor at 0x68 operates on I2C1. Both buses operate in Fast Mode at 400 kHz.
@@ -136,7 +136,7 @@ Because the offline filter includes angular acceleration in the state vector, it
 \end{figure}
 
 \subsection{Consistency Analysis}
-The Normalized Innovation Squared (NIS) was used to evaluate whether the measurement residuals are statistically consistent with the predicted innovation covariance:
+The Normalized Innovation Squared (NIS) was used to evaluate whether the measurement residuals are statistically consistent with the predicted innovation covariance \cite{barshalom2001}:
 \begin{equation}
 \epsilon_k =
 \boldsymbol{\nu}_k^T
@@ -172,6 +172,29 @@ However, the live experiment also shows why the estimation strategy must be diff
 In conclusion, the full-state UKF is valuable as an offline modeling and validation tool for spatially distributed IMU fusion. For real-time gyroscopic mouse control, a reduced-state online filter provides a more practical balance between noise reduction and responsiveness. Future work should combine the online UKF-lite with deterministic multi-IMU algebraic features and complementary filtering so that the final controller can preserve low latency while still benefiting from the redundancy of the three-sensor array.
 
 \section*{Acknowledgment}
-The authors thank Prof. Dr. Engin Masazade for his guidance in EE4084. During the preparation of this work, the authors utilized ChatGPT to generate structural drafts and improve the wording of specific sections, including the Abstract, Results, Discussion, and Conclusion sections. Following the use of this tool, the authors thoroughly reviewed and edited the material, and assume full responsibility for the final content of the publication.
+The authors thank Prof. Dr. Engin Masazade for his guidance in EE4084 and EEE7023. During the preparation of this work, the authors utilized ChatGPT to generate structural drafts and improve the wording of specific sections, including the Abstract, Results, Discussion, and Conclusion sections. Following the use of this tool, the authors thoroughly reviewed and edited the material, and assume full responsibility for the final content of the publication.
+
+\begin{thebibliography}{00}
+\bibitem{kalman1960}
+R. E. Kalman, ``A new approach to linear filtering and prediction problems,'' \textit{Journal of Basic Engineering}, vol. 82, no. 1, pp. 35--45, Mar. 1960.
+
+\bibitem{julier2004}
+S. J. Julier and J. K. Uhlmann, ``Unscented filtering and nonlinear estimation,'' \textit{Proceedings of the IEEE}, vol. 92, no. 3, pp. 401--422, Mar. 2004.
+
+\bibitem{wan2000}
+E. A. Wan and R. van der Merwe, ``The unscented Kalman filter for nonlinear estimation,'' in \textit{Proc. IEEE Adaptive Systems for Signal Processing, Communications, and Control Symposium}, Lake Louise, AB, Canada, 2000, pp. 153--158, doi: 10.1109/ASSPCC.2000.882463.
+
+\bibitem{kuipers1999}
+J. B. Kuipers, \textit{Quaternions and Rotation Sequences}. Princeton, NJ, USA: Princeton University Press, 1999.
+
+\bibitem{crassidis2003}
+J. L. Crassidis and F. L. Markley, ``Unscented filtering for spacecraft attitude estimation,'' \textit{Journal of Guidance, Control, and Dynamics}, vol. 26, no. 4, pp. 536--542, Jul.--Aug. 2003.
+
+\bibitem{barshalom2001}
+Y. Bar-Shalom, X. R. Li, and T. Kirubarajan, \textit{Estimation with Applications to Tracking and Navigation}. New York, NY, USA: Wiley, 2001.
+
+\bibitem{invensense2014}
+InvenSense Inc., ``MPU-6500 product specification,'' Rev. 1.1, Jan. 2014.
+\end{thebibliography}
 
 \end{document}
